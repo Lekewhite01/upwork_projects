@@ -202,9 +202,6 @@ def main():
             # Create a number input for specifying the number of active days
             active_days = st.number_input('Active within (days)', min_value=1, step=1)
 
-        # st.dataframe(df)
-
-        
         # Calculate the sum of daily return for each activity date
         daily_return = pd.DataFrame(df.groupby("ACTIVITY_DATE")["DAILY_RETURN"].sum())
         
