@@ -12,7 +12,7 @@ warnings.filterwarnings('ignore')
 
 # Configure Streamlit app settings
 st.set_page_config(layout="wide",
-                   page_title="Campaign Analysis",
+                   page_title="Campaign Analytics",
                    page_icon="https://cdn.iconscout.com/icon/premium/png-512-thumb/marketing-analysis-3141395-2615916.png?f=webp&w=512"
                    )
 
