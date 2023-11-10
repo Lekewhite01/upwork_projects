@@ -181,214 +181,214 @@ def main():
         df = df.loc[(df['ACTIVITY_DATE'] >= starting) & (df['ACTIVITY_DATE'] <= most_recent_date)]
 
         # Within the second column
-    with col2:
-        # Create a selectbox for choosing a media buyer
-        media_buyer = st.selectbox(
-            'Select a media buyer',
-            df["MEDIA_BUYER"].unique().tolist()
-        )
-        
-        # Create a selectbox for choosing a campaign
-        campaign = st.selectbox(
-            'Select a campaign',
-            df["CAMPAIGN"].unique().tolist()
-        )
-
-    # Filter the DataFrame to include only rows where 'MEDIA_BUYER' matches the selected media buyer
-    df = df.loc[df['MEDIA_BUYER'] == media_buyer]
-
-    # Further filter the DataFrame to include only rows where 'CAMPAIGN' matches the selected campaign
-    df = df.loc[df['CAMPAIGN'] == campaign]
-
-    # Within the third column
-    with col3:
-        # Create a number input for specifying the number of active days
-        active_days = st.number_input('Active within (days)', min_value=1, step=1)
-
-    # st.dataframe(df)
-
-    # Button to display daily return chart
-    daily_return = st.button(":grey[DAILY_RETURN]", use_container_width=True, type='primary')
-
-    # If the daily_return button is clicked
-    if daily_return:
-        # Calculate the sum of daily return for each activity date
-        df = pd.DataFrame(df.groupby("ACTIVITY_DATE")["DAILY_RETURN"].sum())
-        
-        # Create a line chart using Plotly Express
-        fig = px.line(data_frame=df,
-            x=df.index,
-            y="DAILY_RETURN",
-            title=f"Daily Return over the last {timelines}"
-        )
-        
-        # Customize chart layout
-        fig.update_layout(xaxis_title="Time Period", yaxis_title="Daily Return", height=600, width=800)
-        
-        # Display the chart using Streamlit
-        st.plotly_chart(fig, use_container_width=True, theme=None)
-
-    # Button to display total return chart
-    total_return = st.button(":grey[TOTAL_RETURN]", use_container_width=True, type='primary')
-    if total_return:
-        # Calculate the sum of total return for each activity date
-        df = pd.DataFrame(df.groupby("ACTIVITY_DATE")["TOTAL_RETURN"].sum())
-
-        # Create a line chart using Plotly Express
-        fig = px.line(data_frame=df,
-            x=df.index,
-            y="TOTAL_RETURN",
-            title=f"Total Return over the last {timelines}"
+        with col2:
+            # Create a selectbox for choosing a media buyer
+            media_buyer = st.selectbox(
+                'Select a media buyer',
+                df["MEDIA_BUYER"].unique().tolist()
             )
-        
-        # Customize chart layout
-        fig.update_layout(xaxis_title="Time Period", yaxis_title="Total Return",height=600, width=800)
-
-        # Display the chart using Streamlit
-        st.plotly_chart(fig, use_container_width=True, theme=None)
-
-    # Button to display daily profit chart
-    daily_profit = st.button(":grey[DAILY_PROFIT]", use_container_width=True, type='primary')
-    if daily_profit:
-        # Calculate the sum of daily profit for each activity date
-        df = pd.DataFrame(df.groupby("ACTIVITY_DATE")["DAILY_PROFIT"].sum())
-
-        # Create a line chart using Plotly Express
-        fig = px.line(data_frame=df,
-            x=df.index,
-            y="DAILY_PROFIT",
-            title=f"Daily Profit over the last {timelines}"
+            
+            # Create a selectbox for choosing a campaign
+            campaign = st.selectbox(
+                'Select a campaign',
+                df["CAMPAIGN"].unique().tolist()
             )
-        
-        # Customize chart layout
-        fig.update_layout(xaxis_title="Time Period", yaxis_title="Daily Profit",height=600, width=800)
 
-        # Display the chart using Streamlit
-        st.plotly_chart(fig, use_container_width=True, theme=None)
+        # Filter the DataFrame to include only rows where 'MEDIA_BUYER' matches the selected media buyer
+        df = df.loc[df['MEDIA_BUYER'] == media_buyer]
 
-    # Button to display total profit chart
-    total_profit = st.button(":grey[TOTAL_PROFIT]", use_container_width=True, type='primary')
-    if total_profit:
-        # Calculate the sum of total profit for each activity date
-        df = pd.DataFrame(df.groupby("ACTIVITY_DATE")["TOTAL_PROFIT"].sum())
+        # Further filter the DataFrame to include only rows where 'CAMPAIGN' matches the selected campaign
+        df = df.loc[df['CAMPAIGN'] == campaign]
 
-        # Create a line chart using Plotly Express
-        fig = px.line(data_frame=df,
-            x=df.index,
-            y="TOTAL_PROFIT",
-            title=f"Total Profit over the last {timelines}"
+        # Within the third column
+        with col3:
+            # Create a number input for specifying the number of active days
+            active_days = st.number_input('Active within (days)', min_value=1, step=1)
+
+        # st.dataframe(df)
+
+        # Button to display daily return chart
+        daily_return = st.button(":grey[DAILY_RETURN]", use_container_width=True, type='primary')
+
+        # If the daily_return button is clicked
+        if daily_return:
+            # Calculate the sum of daily return for each activity date
+            df = pd.DataFrame(df.groupby("ACTIVITY_DATE")["DAILY_RETURN"].sum())
+            
+            # Create a line chart using Plotly Express
+            fig = px.line(data_frame=df,
+                x=df.index,
+                y="DAILY_RETURN",
+                title=f"Daily Return over the last {timelines}"
             )
+            
+            # Customize chart layout
+            fig.update_layout(xaxis_title="Time Period", yaxis_title="Daily Return", height=600, width=800)
+            
+            # Display the chart using Streamlit
+            st.plotly_chart(fig, use_container_width=True, theme=None)
+
+        # Button to display total return chart
+        total_return = st.button(":grey[TOTAL_RETURN]", use_container_width=True, type='primary')
+        if total_return:
+            # Calculate the sum of total return for each activity date
+            df = pd.DataFrame(df.groupby("ACTIVITY_DATE")["TOTAL_RETURN"].sum())
+
+            # Create a line chart using Plotly Express
+            fig = px.line(data_frame=df,
+                x=df.index,
+                y="TOTAL_RETURN",
+                title=f"Total Return over the last {timelines}"
+                )
+            
+            # Customize chart layout
+            fig.update_layout(xaxis_title="Time Period", yaxis_title="Total Return",height=600, width=800)
+
+            # Display the chart using Streamlit
+            st.plotly_chart(fig, use_container_width=True, theme=None)
+
+        # Button to display daily profit chart
+        daily_profit = st.button(":grey[DAILY_PROFIT]", use_container_width=True, type='primary')
+        if daily_profit:
+            # Calculate the sum of daily profit for each activity date
+            df = pd.DataFrame(df.groupby("ACTIVITY_DATE")["DAILY_PROFIT"].sum())
+
+            # Create a line chart using Plotly Express
+            fig = px.line(data_frame=df,
+                x=df.index,
+                y="DAILY_PROFIT",
+                title=f"Daily Profit over the last {timelines}"
+                )
+            
+            # Customize chart layout
+            fig.update_layout(xaxis_title="Time Period", yaxis_title="Daily Profit",height=600, width=800)
+
+            # Display the chart using Streamlit
+            st.plotly_chart(fig, use_container_width=True, theme=None)
+
+        # Button to display total profit chart
+        total_profit = st.button(":grey[TOTAL_PROFIT]", use_container_width=True, type='primary')
+        if total_profit:
+            # Calculate the sum of total profit for each activity date
+            df = pd.DataFrame(df.groupby("ACTIVITY_DATE")["TOTAL_PROFIT"].sum())
+
+            # Create a line chart using Plotly Express
+            fig = px.line(data_frame=df,
+                x=df.index,
+                y="TOTAL_PROFIT",
+                title=f"Total Profit over the last {timelines}"
+                )
+            
+            # Customize chart layout
+            fig.update_layout(xaxis_title="Time Period", yaxis_title="Total Profit",height=600, width=800)
+
+            # Display the chart using Streamlit
+            st.plotly_chart(fig, use_container_width=True, theme=None)
+
+        # Button to display spend and revenue charts
+        spend_revenue = st.button(":grey[SPEND, REVENUE]", use_container_width=True, type='primary')
+        if spend_revenue:
+            # Calculate the sum of spend for each activity date
+            df_spend = pd.DataFrame(df.groupby("ACTIVITY_DATE")["SPEND"].sum())
+
+            # Calculate the sum of revenue for each activity date
+            df_revenue = pd.DataFrame(df.groupby("ACTIVITY_DATE")["REVENUE"].sum())
+
+            # Create a line chart using Plotly Express
+            fig_spend = px.line(data_frame=df_spend,
+                x=df_spend.index,
+                y="SPEND",
+                title=f"Spend over the last {timelines}"
+                )
+            
+            # Customize chart layout
+            fig_spend.update_layout(xaxis_title="Time Period", yaxis_title="Spend",height=600, width=800)
+
+            # Display the chart using Streamlit
+            st.plotly_chart(fig_spend, use_container_width=True, theme=None)
+
+            # Create a line chart using Plotly Express
+            fig_revenue = px.line(data_frame=df_revenue,
+                x=df_revenue.index,
+                y="REVENUE",
+                title=f"Revenue over the last {timelines}"
+                )
+            
+            # Customize chart layout
+            fig_revenue.update_layout(xaxis_title="Time Period", yaxis_title="Revenue",height=600, width=800)
+
+            # Display the chart using Streamlit
+            st.plotly_chart(fig_revenue, use_container_width=True, theme=None)
         
-        # Customize chart layout
-        fig.update_layout(xaxis_title="Time Period", yaxis_title="Total Profit",height=600, width=800)
+        # Button to display per arrival charts
+        arrivals = st.button(":grey[SPEND_PER_ARRIVAL, REVENUE_PER_ARRIVAL, PROFIT_PER_ARRIVAL]", use_container_width=True, type='primary')
+        if arrivals:
+            # Calculate the sum of spend per arrival for each activity date
+            df_spend = pd.DataFrame(df.groupby("ACTIVITY_DATE")["SPEND_PER_ARRIVAL"].sum())
 
-        # Display the chart using Streamlit
-        st.plotly_chart(fig, use_container_width=True, theme=None)
+            # Calculate the sum of revenue per arrival for each activity date
+            df_revenue = pd.DataFrame(df.groupby("ACTIVITY_DATE")["REVENUE_PER_ARRIVAL"].sum())
 
-    # Button to display spend and revenue charts
-    spend_revenue = st.button(":grey[SPEND, REVENUE]", use_container_width=True, type='primary')
-    if spend_revenue:
-        # Calculate the sum of spend for each activity date
-        df_spend = pd.DataFrame(df.groupby("ACTIVITY_DATE")["SPEND"].sum())
+            # Calculate the sum of profit per arrival for each activity date
+            df_profit = pd.DataFrame(df.groupby("ACTIVITY_DATE")["PROFIT_PER_ARRIVAL"].sum())
 
-        # Calculate the sum of revenue for each activity date
-        df_revenue = pd.DataFrame(df.groupby("ACTIVITY_DATE")["REVENUE"].sum())
+            # Create a line chart using Plotly Express
+            fig_spend = px.line(data_frame=df_spend,
+                x=df_spend.index,
+                y="SPEND_PER_ARRIVAL",
+                title=f"Spend Per Arrival over the last {timelines}"
+                )
+            
+            # Customize chart layout
+            fig_spend.update_layout(xaxis_title="Time Period", yaxis_title="Spend Per Arrival",height=600, width=800)
 
-        # Create a line chart using Plotly Express
-        fig_spend = px.line(data_frame=df_spend,
-            x=df_spend.index,
-            y="SPEND",
-            title=f"Spend over the last {timelines}"
-            )
-        
-        # Customize chart layout
-        fig_spend.update_layout(xaxis_title="Time Period", yaxis_title="Spend",height=600, width=800)
+            # Display the chart using Streamlit
+            st.plotly_chart(fig_spend, use_container_width=True, theme=None)
 
-        # Display the chart using Streamlit
-        st.plotly_chart(fig_spend, use_container_width=True, theme=None)
+            # Create a line chart using Plotly Express
+            fig_revenue = px.line(data_frame=df_revenue,
+                x=df_revenue.index,
+                y="REVENUE_PER_ARRIVAL",
+                title=f"Revenue Per Arrival over the last {timelines}"
+                )
+            
+            # Customize chart layout
+            fig_revenue.update_layout(xaxis_title="Time Period", yaxis_title="Revenue Per Arrival",height=600, width=800)
 
-        # Create a line chart using Plotly Express
-        fig_revenue = px.line(data_frame=df_revenue,
-            x=df_revenue.index,
-            y="REVENUE",
-            title=f"Revenue over the last {timelines}"
-            )
-        
-        # Customize chart layout
-        fig_revenue.update_layout(xaxis_title="Time Period", yaxis_title="Revenue",height=600, width=800)
+            # Display the chart using Streamlit
+            st.plotly_chart(fig_revenue, use_container_width=True, theme=None)
 
-        # Display the chart using Streamlit
-        st.plotly_chart(fig_revenue, use_container_width=True, theme=None)
-    
-    # Button to display per arrival charts
-    arrivals = st.button(":grey[SPEND_PER_ARRIVAL, REVENUE_PER_ARRIVAL, PROFIT_PER_ARRIVAL]", use_container_width=True, type='primary')
-    if arrivals:
-        # Calculate the sum of spend per arrival for each activity date
-        df_spend = pd.DataFrame(df.groupby("ACTIVITY_DATE")["SPEND_PER_ARRIVAL"].sum())
+            # Create a line chart using Plotly Express
+            fig_profit = px.line(data_frame=df_profit,
+                x=df_profit.index,
+                y="PROFIT_PER_ARRIVAL",
+                title=f"Profit Per Arrival over the last {timelines}"
+                )
+            
+            # Customize chart layout
+            fig_profit.update_layout(xaxis_title="Time Period", yaxis_title="Profit Per Arrival",height=600, width=800)
 
-        # Calculate the sum of revenue per arrival for each activity date
-        df_revenue = pd.DataFrame(df.groupby("ACTIVITY_DATE")["REVENUE_PER_ARRIVAL"].sum())
+            # Display the chart using Streamlit
+            st.plotly_chart(fig_profit, use_container_width=True, theme=None)
 
-        # Calculate the sum of profit per arrival for each activity date
-        df_profit = pd.DataFrame(df.groupby("ACTIVITY_DATE")["PROFIT_PER_ARRIVAL"].sum())
+        # Button to display acceptance rate chart
+        acceptance_rate = st.button(":grey[ACCEPTANCE_RATE]", use_container_width=True, type='primary')
+        if acceptance_rate:
+            # Calculate the sum of acceptance rate for each activity date
+            df = pd.DataFrame(df.groupby("ACTIVITY_DATE")["ACCEPTANCE_RATE"].sum())
 
-        # Create a line chart using Plotly Express
-        fig_spend = px.line(data_frame=df_spend,
-            x=df_spend.index,
-            y="SPEND_PER_ARRIVAL",
-            title=f"Spend Per Arrival over the last {timelines}"
-            )
-        
-        # Customize chart layout
-        fig_spend.update_layout(xaxis_title="Time Period", yaxis_title="Spend Per Arrival",height=600, width=800)
+            # Create a line chart using Plotly Express
+            fig = px.line(data_frame=df,
+                x=df.index,
+                y="ACCEPTANCE_RATE",
+                title=f"Acceptance Rate over the last {timelines}"
+                )
+            
+            # Customize chart layout
+            fig.update_layout(xaxis_title="Time Period", yaxis_title="Acceptance Rate",height=600, width=800)
 
-        # Display the chart using Streamlit
-        st.plotly_chart(fig_spend, use_container_width=True, theme=None)
-
-        # Create a line chart using Plotly Express
-        fig_revenue = px.line(data_frame=df_revenue,
-            x=df_revenue.index,
-            y="REVENUE_PER_ARRIVAL",
-            title=f"Revenue Per Arrival over the last {timelines}"
-            )
-        
-        # Customize chart layout
-        fig_revenue.update_layout(xaxis_title="Time Period", yaxis_title="Revenue Per Arrival",height=600, width=800)
-
-        # Display the chart using Streamlit
-        st.plotly_chart(fig_revenue, use_container_width=True, theme=None)
-
-        # Create a line chart using Plotly Express
-        fig_profit = px.line(data_frame=df_profit,
-            x=df_profit.index,
-            y="PROFIT_PER_ARRIVAL",
-            title=f"Profit Per Arrival over the last {timelines}"
-            )
-        
-        # Customize chart layout
-        fig_profit.update_layout(xaxis_title="Time Period", yaxis_title="Profit Per Arrival",height=600, width=800)
-
-        # Display the chart using Streamlit
-        st.plotly_chart(fig_profit, use_container_width=True, theme=None)
-
-    # Button to display acceptance rate chart
-    acceptance_rate = st.button(":grey[ACCEPTANCE_RATE]", use_container_width=True, type='primary')
-    if acceptance_rate:
-        # Calculate the sum of acceptance rate for each activity date
-        df = pd.DataFrame(df.groupby("ACTIVITY_DATE")["ACCEPTANCE_RATE"].sum())
-
-        # Create a line chart using Plotly Express
-        fig = px.line(data_frame=df,
-            x=df.index,
-            y="ACCEPTANCE_RATE",
-            title=f"Acceptance Rate over the last {timelines}"
-            )
-        
-        # Customize chart layout
-        fig.update_layout(xaxis_title="Time Period", yaxis_title="Acceptance Rate",height=600, width=800)
-
-        # Display the chart using Streamlit
-        st.plotly_chart(fig, use_container_width=True, theme=None)
+            # Display the chart using Streamlit
+            st.plotly_chart(fig, use_container_width=True, theme=None)
     
 if __name__ == "__main__":
     main()
