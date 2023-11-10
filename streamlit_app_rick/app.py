@@ -50,8 +50,11 @@ tab1, tab2, tab3 = st.tabs(["Campaign Stats", "Page 3", "Page 4"])
 def read_data(filepath):
     df = pd.read_csv(filepath)
     df['ACTIVITY_DATE'] = pd.to_datetime(df['ACTIVITY_DATE'], format="%Y-%m-%d")
-    most_recent_date = df['ACTIVITY_DATE'].max()
-    return df, most_recent_date
+    return df
+
+@st.cache_data
+def max_date(dataframe):
+    return dataframe['ACTIVITY_DATE'].max()
 
 @st.cache_data
 def roll_back_days(most_recent_date, days_to_roll_back):
@@ -61,54 +64,57 @@ def roll_back_days(most_recent_date, days_to_roll_back):
     return rolled_back_date
 
 def main():
-    df, most_recent_date = read_data("data_for_dash_full.csv")
-    most_recent_date = df['ACTIVITY_DATE'].max()
+    df = read_data("data_for_dash_full.csv")
+    most_recent_date = max_date(df)
     with tab1:
         timelines = st.radio(label="Select a Time Window", options=["7 Days", "14 Days", "Lifetime"], horizontal=True)
         col1, col2, col3 = st.columns(3)
         with col1:
             if timelines == "7 Days":
-                start_date = st.text_input(
+                end_date = st.text_input(
                     "Start Date",
                     label_visibility="visible",
                     disabled=True,
                     placeholder=str(most_recent_date).split(' ')[0],
                 )
-
-                end_date = st.text_input(
+                starting = roll_back_days(most_recent_date, 7)
+                start_date = st.text_input(
                     "End Date",
                     label_visibility="visible",
                     disabled=True,
-                    placeholder=str(roll_back_days(most_recent_date, 7)).split(' ')[0],
+                    placeholder=str(starting).split(' ')[0],
                 )
             elif timelines == "14 Days":
-                start_date = st.text_input(
+                end_date = st.text_input(
                     "Start Date",
                     label_visibility="visible",
                     disabled=True,
                     placeholder=str(most_recent_date).split(' ')[0],
                 )
-
-                end_date = st.text_input(
+                
+                starting = roll_back_days(most_recent_date, 14)
+                start_date = st.text_input(
                     "End Date",
                     label_visibility="visible",
                     disabled=True,
-                    placeholder=str(roll_back_days(most_recent_date, 14)).split(' ')[0],
+                    placeholder=str(starting).split(' ')[0],
                 )
 
             else:
-                start_date = st.text_input(
+                end_date = st.text_input(
                     "Start Date",
                     label_visibility="visible",
                     disabled=True,
                     placeholder=str(most_recent_date).split(' ')[0],
                 )
-                end_date = st.text_input(
+                starting = df['ACTIVITY_DATE'].min()
+                start_date = st.text_input(
                     "End Date",
                     label_visibility="visible",
                     disabled=True,
-                    placeholder=str(df['ACTIVITY_DATE'].min()).split(' ')[0],
+                    placeholder=str(starting).split(' ')[0],
                 )
+        df = df.loc[(df['ACTIVITY_DATE'] >= starting) & (df['ACTIVITY_DATE'] <= most_recent_date)]
         with col2:
             media_buyer = st.selectbox(
                 'Select a media buyer',
@@ -118,16 +124,19 @@ def main():
                 'Select a campaign',
                 df["CAMPAIGN"].unique().tolist()
                 )
+        df = df.loc[df['MEDIA_BUYER'] == media_buyer]
+        df = df.loc[df['CAMPAIGN'] == campaign]
         with col3:
             active_days = st.number_input('Active within (days)', min_value=1, step=1)
+    st.dataframe(df)
 
-    daily_return = st.button(":grey[DAILY_RETURN]", use_container_width=True, type='primary')
-    total_return = st.button(":grey[TOTAL_RETURN]", use_container_width=True, type='primary')
-    daily_profit = st.button(":grey[DAILY_PROFIT]", use_container_width=True, type='primary')
-    total_profit = st.button(":grey[TOTAL_PROFIT]", use_container_width=True, type='primary')
-    spend_revenue = st.button(":grey[SPEND_REVENUE]", use_container_width=True, type='primary')
-    arrivals = st.button(":grey[SPEND_PER_ARRIVAL, REVENUE_PER_ARRIVAL, PROFIT_PER_ARRIVAL]", use_container_width=True, type='primary')
-    acceptance_rate = st.button(":grey[ACCEPTANCE_RATE]", use_container_width=True, type='primary')
+    # daily_return = st.button(":grey[DAILY_RETURN]", use_container_width=True, type='primary')
+    # total_return = st.button(":grey[TOTAL_RETURN]", use_container_width=True, type='primary')
+    # daily_profit = st.button(":grey[DAILY_PROFIT]", use_container_width=True, type='primary')
+    # total_profit = st.button(":grey[TOTAL_PROFIT]", use_container_width=True, type='primary')
+    # spend_revenue = st.button(":grey[SPEND_REVENUE]", use_container_width=True, type='primary')
+    # arrivals = st.button(":grey[SPEND_PER_ARRIVAL, REVENUE_PER_ARRIVAL, PROFIT_PER_ARRIVAL]", use_container_width=True, type='primary')
+    # acceptance_rate = st.button(":grey[ACCEPTANCE_RATE]", use_container_width=True, type='primary')
 
 
     
