@@ -126,63 +126,35 @@ def main():
             # If the selected time window is "7 Days"
             if timelines == "7 Days":
                 # Create a text input for the start date
-                end_date = st.text_input(
-                    "Start Date",
-                    label_visibility="visible",
-                    disabled=False,
-                    placeholder=str(most_recent_date).split(' ')[0],
-                )
+                end_date = st.date_input("Start Date", most_recent_date)
                 
                 # Calculate the starting date by rolling back 7 days from the most recent date
                 starting = roll_back_days(most_recent_date, 7)
                 
                 # Create a text input for the end date
-                start_date = st.text_input(
-                    "End Date",
-                    label_visibility="visible",
-                    disabled=False,
-                    placeholder=str(starting).split(' ')[0],
-                )
+                start_date = st.date_input("End Date", starting)
+                
             # If the selected time window is "14 Days"
             elif timelines == "14 Days":
                 # Create a text input for the start date
-                end_date = st.text_input(
-                    "Start Date",
-                    label_visibility="visible",
-                    disabled=False,
-                    placeholder=str(most_recent_date).split(' ')[0],
-                )
+                end_date = st.date_input("Start Date", most_recent_date)
                 
                 # Calculate the starting date by rolling back 14 days from the most recent date
                 starting = roll_back_days(most_recent_date, 14)
                 
                 # Create a text input for the end date
-                start_date = st.text_input(
-                    "End Date",
-                    label_visibility="visible",
-                    disabled=False,
-                    placeholder=str(starting).split(' ')[0],
-                )
+                start_date = st.date_input("End Date", starting)
+
             # If the selected time window is "Lifetime"
             else:
                 # Create a text input for the start date
-                end_date = st.text_input(
-                    "Start Date",
-                    label_visibility="visible",
-                    disabled=False,
-                    placeholder=str(most_recent_date).split(' ')[0],
-                )
+                end_date = st.date_input("Start Date", most_recent_date)
                 
                 # Set the starting date as the minimum date in the DataFrame's 'ACTIVITY_DATE' column
                 starting = df['ACTIVITY_DATE'].min()
                 
                 # Create a text input for the end date
-                start_date = st.text_input(
-                    "End Date",
-                    label_visibility="visible",
-                    disabled=False,
-                    placeholder=str(starting).split(' ')[0],
-                )
+                start_date = st.date_input("End Date", starting)
 
             # Filter the DataFrame to include only rows within the selected time window
             df = df.loc[(df['ACTIVITY_DATE'] >= starting) & (df['ACTIVITY_DATE'] <= most_recent_date)]
