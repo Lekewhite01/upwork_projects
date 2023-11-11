@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 import plotly.express as px
-from datetime import timedelta
+from datetime import timedelta, datetime
 warnings.filterwarnings('ignore')
 
 # Ignore warnings
@@ -93,6 +93,13 @@ def roll_back_days(most_recent_date, days_to_roll_back):
 
     return rolled_back_date
 
+# Function to filter campaigns options based on budget threshold
+@st.cache_data
+def filter_active_days(days, df):
+    end_date = datetime.today()
+    start_date = roll_back_days(end_date, days)
+    return df.loc[(df['ACTIVITY_DATE'] >= start_date) & (df['ACTIVITY_DATE'] <= end_date)]['CAMPAIGN'].unique().tolist()
+
 def main():
     """
     Main function for interactive Streamlit dashboard.
@@ -177,8 +184,8 @@ def main():
                     placeholder=str(starting).split(' ')[0],
                 )
 
-        # Filter the DataFrame to include only rows within the selected time window
-        df = df.loc[(df['ACTIVITY_DATE'] >= starting) & (df['ACTIVITY_DATE'] <= most_recent_date)]
+            # Filter the DataFrame to include only rows within the selected time window
+            df = df.loc[(df['ACTIVITY_DATE'] >= starting) & (df['ACTIVITY_DATE'] <= most_recent_date)]
 
         # Within the second column
         with col2:
@@ -191,16 +198,28 @@ def main():
             # Filter the DataFrame to include only rows where 'MEDIA_BUYER' matches the selected media buyer
             df = df[df['MEDIA_BUYER'] == media_buyer]
 
-            # Create a selectbox for choosing a campaign
-            campaign = st.selectbox(
-                    'Select a campaign',
-                    df["CAMPAIGN"].unique().tolist()
-                )
-            df = df[df['CAMPAIGN'] == campaign]
         # Within the third column
         with col3:
             # Create a number input for specifying the number of active days
-            active_days = st.number_input('Active within (days)', min_value=1, step=1)
+            active_days = st.number_input('Active within (days)', min_value=1, step=1, value=15)
+        if active_days:
+            with col2:
+                end_date = datetime.today()
+                start_date = roll_back_days(end_date,  active_days)
+                df = df[df['ACTIVITY_DATE'].between(start_date, end_date)]
+                campaign = st.selectbox(
+                    'Select a campaign',
+                    df['CAMPAIGN'].unique().tolist()
+                )
+                df = df[df['CAMPAIGN'] == campaign]
+        else:
+            with col2:
+                # Create a selectbox for choosing a campaign
+                campaign = st.selectbox(
+                        'Select a campaign',
+                        df["CAMPAIGN"].unique().tolist()
+                    )
+                df = df[df['CAMPAIGN'] == campaign]
 
         # Calculate the sum of daily return for each activity date
         daily_return = pd.DataFrame(df.groupby("ACTIVITY_DATE")["DAILY_RETURN"].sum())
