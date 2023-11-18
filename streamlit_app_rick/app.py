@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 import warnings
 import plotly.express as px
 from datetime import timedelta, datetime
-warnings.filterwarnings('ignore')
+from sqlalchemy import create_engine, Column, Integer, String, and_, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
 
 # Ignore warnings
 warnings.filterwarnings('ignore')
@@ -44,7 +46,90 @@ st.markdown(custom_css, unsafe_allow_html=True)
 # Create a title container with an image and text
 st.markdown('<div class="title-container"><img src="https://cdn.iconscout.com/icon/premium/png-512-thumb/marketing-analysis-3141395-2615916.png?f=webp&w=512" alt="Image" width="100"/><h1 class="title-text">Campaign Analytics</h1></div>', unsafe_allow_html=True)
 
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    profiles = relationship('UserProfile', back_populates='user')
+
+class UserProfile(Base):
+    """
+    Represents a user profile with personalized settings and presets.
+
+    Attributes:
+    - id (int): Unique identifier for the user profile.
+    - username (str): Unique username associated with the user.
+    - profilename (str): Unique name given to the user profile.
+    - time_line (str): Timeline setting for the user profile.
+    - media_buyer (str): Media buyer setting for the user profile.
+    - activer_days (int): Number of active days setting for the user profile.
+    - campaign (str): Campaign setting for the user profile.
+
+    Table Name: 'user_presets'
+    """
+    __tablename__ = 'user_presets'
+
+    id = Column(Integer, primary_key=True, index=True)
+    # username = Column(String, unique=True, index=True)
+    profilename = Column(String, unique=True, index=True)
+    time_line = Column(String)
+    media_buyer = Column(String)
+    activer_days = Column(Integer)
+    campaign = Column(String)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    user = relationship('User', back_populates='profiles')
+
+
+engine = create_engine('sqlite:///database/user_presets.db')
+Base.metadata.create_all(bind=engine)
+Session = sessionmaker(bind=engine)
+
 tab1, tab2, tab3 = st.tabs(["Campaign Stats", "Page 3", "Page 4"])
+
+@st.cache_data
+def save_settings(user_name, profile_name, settings):
+    """
+    Save user profile settings to the database.
+
+    Parameters:
+    - user_name (str): Unique username associated with the user.
+    - profile_name (str): Unique name given to the user profile.
+    - settings (dict): Dictionary containing user profile settings.
+
+    Returns:
+    None
+    """
+    # Create a new database session
+    session = Session()
+
+    # Check if the user already exists, or create a new user
+    user = session.query(User).filter_by(username=user_name).first()
+    if not user:
+        user = User(username=user_name)
+        session.add(user)
+        session.commit()
+
+    # Create a new UserProfile object with the provided parameters and settings
+    user_profile_obj = UserProfile(profilename=profile_name, **settings, user=user)
+
+    # Add the UserProfile object to the session
+    session.add(user_profile_obj)
+
+    # Commit the changes to the database
+    session.commit()
+
+    # Close the session
+    session.close()
+
+@st.cache_data
+def load_settings(user_name, profile_name):
+    session = Session()
+    user_profile_obj = session.query(UserProfile).filter(and_(UserProfile.username == user_name, UserProfile.profilename == profile_name)).first()
+    session.close()
+    return user_profile_obj
 
 @st.cache_data
 def read_data(filepath):
@@ -94,11 +179,11 @@ def roll_back_days(most_recent_date, days_to_roll_back):
     return rolled_back_date
 
 # Function to filter campaigns options based on budget threshold
-@st.cache_data
-def filter_active_days(days, df):
-    end_date = datetime.today()
-    start_date = roll_back_days(end_date, days)
-    return df.loc[(df['ACTIVITY_DATE'] >= start_date) & (df['ACTIVITY_DATE'] <= end_date)]['CAMPAIGN'].unique().tolist()
+# @st.cache_data
+# def filter_active_days(days, df):
+#     end_date = datetime.today()
+#     start_date = roll_back_days(end_date, days)
+#     return df.loc[(df['ACTIVITY_DATE'] >= start_date) & (df['ACTIVITY_DATE'] <= end_date)]['CAMPAIGN'].unique().tolist()
 
 def main():
     """
@@ -107,9 +192,11 @@ def main():
     Reads data, allows user to select time window, media buyer, and campaign.
     Displays various metrics based on user selections using Plotly charts.
     """
-
     # Read csv data file
     df = read_data("data_for_dash_full.csv")
+
+    # Create a copy of the df
+    preset_df = df.copy()
     # Get the most recent date from the DataFrame using the max_date function
     most_recent_date = max_date(df)
 
@@ -353,6 +440,41 @@ def main():
 
         # Display the chart using Streamlit
         st.plotly_chart(acceptance_rate_fig, use_container_width=True, theme=None)
+
+        # Save settings button
+        # if save_preset:
+        with st.sidebar:
+            st.header("Save Profile")
+            # Prompt for profile name
+            profile_name = st.text_input("Enter a new profile name:")
+            # Prompt for user name
+            user_name = st.selectbox(
+                    'Enter a user:',
+                    preset_df['MEDIA_BUYER'].unique().tolist()
+                )
+
+            settings = {
+                "time_line": timelines,
+                "media_buyer": media_buyer,
+                "activer_days": active_days,
+                "campaign": campaign
+            }
+            save_preset = st.button("Save Settings")
+
+            if save_preset:
+                save_settings(user_name, profile_name, settings)
+                st.success(f"Settings for {user_name} saved!")
+
+            # Display presests
+            st.header("Presets")
+        # current_settings = load_settings(user_name, profile_name)
+        # if current_settings:
+        #     st.write(current_settings.__dict__)
+        # else:
+        #     st.warning("Select a user profile and save settings to view current settings.")
+
+
+
     
 if __name__ == "__main__":
     main()
