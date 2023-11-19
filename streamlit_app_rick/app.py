@@ -8,6 +8,8 @@ from datetime import timedelta, datetime
 from sqlalchemy import create_engine, Column, Integer, String, and_, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.exc import IntegrityError
 
 # Ignore warnings
 warnings.filterwarnings('ignore')
@@ -73,7 +75,7 @@ class UserProfile(Base):
     __tablename__ = 'user_presets'
 
     id = Column(Integer, primary_key=True, index=True)
-    # username = Column(String, unique=True, index=True)
+    username = Column(String, unique=True, index=True)
     profilename = Column(String, unique=True, index=True)
     time_line = Column(String)
     media_buyer = Column(String)
@@ -81,7 +83,6 @@ class UserProfile(Base):
     campaign = Column(String)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship('User', back_populates='profiles')
-
 
 engine = create_engine('sqlite:///database/user_presets.db')
 Base.metadata.create_all(bind=engine)
@@ -95,6 +96,7 @@ def save_settings(user_name, profile_name, settings):
     Save user profile settings to the database.
 
     Parameters:
+    - session (Session): SQLAlchemy database session.
     - user_name (str): Unique username associated with the user.
     - profile_name (str): Unique name given to the user profile.
     - settings (dict): Dictionary containing user profile settings.
@@ -105,24 +107,70 @@ def save_settings(user_name, profile_name, settings):
     # Create a new database session
     session = Session()
 
-    # Check if the user already exists, or create a new user
-    user = session.query(User).filter_by(username=user_name).first()
-    if not user:
-        user = User(username=user_name)
-        session.add(user)
+    try:
+        # Query the database for the user with the given username
+        user = session.query(User).filter_by(username=user_name).first()
+
+        if user:
+            # Check if a profile with the same name already exists for the user
+            existing_profile = session.query(UserProfile).filter_by(user=user, profilename=profile_name).first()
+
+            if existing_profile:
+                # Update the existing profile with the new settings
+                for key, value in settings.items():
+                    setattr(existing_profile, key, value)
+        else:
+            # Create a new UserProfile object with the provided parameters and settings
+            new_profile = UserProfile(username=user_name, profilename=profile_name, **settings)
+            # Append the new profile to the user's profiles
+            # user.profiles.append(new_profile)
+        session.add(new_profile)
+        # Commit the changes to the database
         session.commit()
 
-    # Create a new UserProfile object with the provided parameters and settings
-    user_profile_obj = UserProfile(profilename=profile_name, **settings, user=user)
+        # else:
+        #     print(f"User with username '{user_name}' not found.")
 
-    # Add the UserProfile object to the session
-    session.add(user_profile_obj)
+    except IntegrityError as e:
+        # Handle IntegrityError, e.g., log the error or notify the user
+        print(f"Error: {e}")
+        session.rollback()
 
-    # Commit the changes to the database
-    session.commit()
+    except Exception as e:
+        # Handle other exceptions as needed
+        print(f"Error: {e}")
+        session.rollback()
 
-    # Close the session
-    session.close()
+    finally:
+        # Close the session (if not using a context manager)
+        session.close()
+
+# def save_settings(user_name, profile_name, settings):
+#     """
+#     Save user profile settings to the database.
+
+#     Parameters:
+#     - user_name (str): Unique username associated with the user.
+#     - profile_name (str): Unique name given to the user profile.
+#     - settings (dict): Dictionary containing user profile settings.
+
+#     Returns:
+#     None
+#     """
+    # # Create a new database session
+    # session = Session()
+
+#     # Create a new UserProfile object with the provided parameters and settings
+#     user_profile_obj = UserProfile(username=user_name, profilename=profile_name, **settings)
+    
+#     # Add the UserProfile object to the session
+#     session.add(user_profile_obj)
+
+#     # Commit the changes to the database
+#     session.commit()
+
+#     # Close the session
+#     session.close()
 
 @st.cache_data
 def load_settings(user_name, profile_name):
@@ -177,13 +225,6 @@ def roll_back_days(most_recent_date, days_to_roll_back):
     rolled_back_date = most_recent_date - timedelta(days=days_to_roll_back)
 
     return rolled_back_date
-
-# Function to filter campaigns options based on budget threshold
-# @st.cache_data
-# def filter_active_days(days, df):
-#     end_date = datetime.today()
-#     start_date = roll_back_days(end_date, days)
-#     return df.loc[(df['ACTIVITY_DATE'] >= start_date) & (df['ACTIVITY_DATE'] <= end_date)]['CAMPAIGN'].unique().tolist()
 
 def main():
     """
