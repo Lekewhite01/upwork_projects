@@ -238,7 +238,7 @@ def main():
                 end_date_main = st.date_input("Start Date", most_recent_date)
                 
                 # Calculate the starting date by rolling back 14 days from the most recent date
-                starting_main = roll_back_days(most_recent_date, 14)
+                starting = roll_back_days(most_recent_date, 14)
                 
                 # Create a text input for the end date
                 start_date_main = st.date_input("End Date", starting)
@@ -256,6 +256,9 @@ def main():
 
             # Filter the DataFrame to include only rows within the selected time window
             df = df.loc[(df['ACTIVITY_DATE'] >= starting) & (df['ACTIVITY_DATE'] <= most_recent_date)]
+
+            # if end_date_main and start_date_main:
+            #     df = df.loc[(df['ACTIVITY_DATE'] >= start_date_main) & (df['ACTIVITY_DATE'] <= end_date_main)]
 
         # Within the second column
         with col2:
