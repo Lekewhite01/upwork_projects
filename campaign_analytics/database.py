@@ -6,7 +6,6 @@ from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 
-# Define the Profile model
 class Profile(Base):
     """
     SQLAlchemy model for the 'profiles' table.
