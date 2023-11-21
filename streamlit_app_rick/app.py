@@ -1,7 +1,5 @@
 import streamlit as st
-import json
 import pandas as pd
-import matplotlib.pyplot as plt
 import warnings
 import plotly.express as px
 from datetime import timedelta, datetime
@@ -358,7 +356,6 @@ def main():
         # Display the chart using Streamlit
         st.plotly_chart(total_profit_fig, use_container_width=True, theme=None)
 
-    
         # Calculate the sum of spend for each activity date
         df_spend = pd.DataFrame(df.groupby("ACTIVITY_DATE")["SPEND"].sum())
 
@@ -454,7 +451,6 @@ def main():
 
         # Display the chart using Streamlit
         st.plotly_chart(acceptance_rate_fig, use_container_width=True, theme=None)
-
 
         # Create sidebar with save settings and load presets - Indent every line of code after `with st.sidebar`
         # Display the Save Profile section in the sidebar
