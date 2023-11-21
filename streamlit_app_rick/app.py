@@ -114,7 +114,6 @@ def save_profile(user_name, profile_name, settings):
     session.add(profile)
     session.commit()
 
-# @st.cache_data
 def load_profile(user_name):
     """
     Load user profiles from the database for a specified user.
