@@ -455,7 +455,16 @@ def main():
         # Create sidebar with save settings and load presets - Indent every line of code after `with st.sidebar`
         # Display the Save Profile section in the sidebar
         with st.sidebar:
-            st.header("Save Profile")
+            # Display Current Settings
+            st.header("Current Settings")
+            st.info(f"Time window: {timelines}") 
+            st.info(f"Start Date: {str(end_date_main).split(' ')[0].replace('-', '/')}") # Format for conformity with streamlit date input
+            st.info(f"End Date: {str(start_date_main).split(' ')[0].replace('-', '/')}") # Format for conformity with streamlit date input
+            st.info(f"Media buyer: {media_buyer}")
+            st.info(f"Active within (days): {active_days}")
+            st.info(f"Campaign: {campaign}")
+
+            st.header("Save Current Settings")
 
             # Prompt for user name
             user_name = st.selectbox(
@@ -483,21 +492,13 @@ def main():
                 save_profile(user_name, profile_name, settings)
                 st.success(f"Settings for {user_name} saved!")
 
-            # Display Current Settings
-            st.header("Current Settings")
-            st.info(f"Time window: {timelines}") 
-            st.info(f"Start Date: {str(end_date_main).split(' ')[0].replace('-', '/')}") # Format for conformity with streamlit date input
-            st.info(f"End Date: {str(start_date_main).split(' ')[0].replace('-', '/')}") # Format for conformity with streamlit date input
-            st.info(f"Media buyer: {media_buyer}")
-            st.info(f"Active within (days): {active_days}")
-            st.info(f"Campaign: {campaign}")
 
             # Display Saved Settings
-            st.header("Saved Settings")
+            st.header("Load Saved Settings")
 
             # Prompt for user to select
             user = st.selectbox(
-                'user:',
+                'User:',
                 preset_df['MEDIA_BUYER'].unique().tolist()
             )
             if user:
@@ -507,7 +508,7 @@ def main():
             # Prompt for profile name
             profile_df = settings_df[settings_df["user_name"]==user]
             settings_profile = st.selectbox(
-                'Saved profiles:',
+                'Saved settings:',
                 profile_df['profile_name'].tolist()
             )
 
