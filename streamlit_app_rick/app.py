@@ -115,8 +115,8 @@ def save_profile(user_name, profile_name, settings):
     # Add the profile to the session and commit the changes to the database
     session.add(profile)
     session.commit()
-
-@st.cache_data
+    
+# @st.cache_data
 def load_profile(user_name):
     """
     Load user profiles from the database for a specified user.
@@ -487,6 +487,8 @@ def main():
             # Display Current Settings
             st.header("Current Settings")
             st.info(f"Time window: {timelines}") 
+            st.info(f"Start Date: {str(start_date).split(' ')[0].replace('-', '/')}") # Format for conformity with streamlit date input
+            st.info(f"End Date: {str(end_date).split(' ')[0].replace('-', '/')}") # Format for conformity with streamlit date input
             st.info(f"Media buyer: {media_buyer}")
             st.info(f"Active within (days): {active_days}")
             st.info(f"Campaign: {campaign}")
@@ -499,12 +501,12 @@ def main():
                 'User:',
                 preset_df['MEDIA_BUYER'].unique().tolist()
             )
+            if user:
+                # Load profiles for the selected user
+                settings_df = load_profile(user_name=user)
 
-            # Load profiles for the selected user
-            settings_df = load_profile(user_name=user)
-
-            # Prompt for profile name
-            profile_df = settings_df[settings_df["user_name"]==user]
+                # Prompt for profile name
+                profile_df = settings_df[settings_df["user_name"]==user]
             settings_profile = st.selectbox(
                 'Saved profiles:',
                 profile_df['profile_name'].tolist()
