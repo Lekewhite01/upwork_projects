@@ -497,7 +497,7 @@ def main():
 
             # Prompt for user to select
             user = st.selectbox(
-                'User:',
+                'Select a user:',
                 preset_df['MEDIA_BUYER'].unique().tolist()
             )
             if user:
