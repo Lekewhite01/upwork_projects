@@ -1,15 +1,13 @@
 import streamlit as st
+import json
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 import plotly.express as px
 from datetime import timedelta, datetime
-from sqlalchemy import create_engine, Column, Integer, String, and_, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, JSON, DateTime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
-from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import sessionmaker
 
 # Ignore warnings
 warnings.filterwarnings('ignore')
@@ -50,134 +48,106 @@ st.markdown('<div class="title-container"><img src="https://cdn.iconscout.com/ic
 
 Base = declarative_base()
 
-class User(Base):
-    __tablename__ = 'users'
-
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    profiles = relationship('UserProfile', back_populates='user')
-
-class UserProfile(Base):
+# Define the Profile model
+class Profile(Base):
     """
-    Represents a user profile with personalized settings and presets.
+    SQLAlchemy model for the 'profiles' table.
 
     Attributes:
-    - id (int): Unique identifier for the user profile.
-    - username (str): Unique username associated with the user.
-    - profilename (str): Unique name given to the user profile.
-    - time_line (str): Timeline setting for the user profile.
-    - media_buyer (str): Media buyer setting for the user profile.
-    - activer_days (int): Number of active days setting for the user profile.
-    - campaign (str): Campaign setting for the user profile.
+        id (int): Unique identifier for each profile.
+        user_name (str): User name associated with the profile.
+        profile_name (str): Name of the profile.
+        settings (dict): JSON representation of profile settings.
+        timestamp_UTC (datetime): Timestamp indicating when the profile was created (in UTC).
 
-    Table Name: 'user_presets'
+    Note:
+        The 'timestamp_UTC' field is automatically populated with the current UTC time when a new profile is created.
+
+    Example:
+        To create a new profile instance:
+        >>> profile = Profile(user_name='JohnDoe', profile_name='Default', settings={'option1': True, 'option2': 'value'})
     """
-    __tablename__ = 'user_presets'
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    profilename = Column(String, unique=True, index=True)
-    time_line = Column(String)
-    media_buyer = Column(String)
-    activer_days = Column(Integer)
-    campaign = Column(String)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    user = relationship('User', back_populates='profiles')
+    __tablename__ = 'profiles'
 
+    id = Column(Integer, unique=True, primary_key=True)
+    user_name = Column(String)
+    profile_name = Column(String)
+    settings = Column(JSON)
+    timestamp_UTC = Column(DateTime, default=datetime.utcnow)  # Default to the current UTC time
+
+# Create an SQLAlchemy engine with a SQLite database file named 'user_presets.db' in the 'database' folder
 engine = create_engine('sqlite:///database/user_presets.db')
+
+# Create the database tables defined in the Base class (assuming Base is a declarative_base())
+# and bind them to the engine
 Base.metadata.create_all(bind=engine)
+
+# Create a Session class bound to the engine
 Session = sessionmaker(bind=engine)
 
 tab1, tab2, tab3 = st.tabs(["Campaign Stats", "Page 3", "Page 4"])
 
 @st.cache_data
-def save_settings(user_name, profile_name, settings):
+def save_profile(user_name, profile_name, settings):
     """
-    Save user profile settings to the database.
+    Save a user profile to the database.
 
-    Parameters:
-    - session (Session): SQLAlchemy database session.
-    - user_name (str): Unique username associated with the user.
-    - profile_name (str): Unique name given to the user profile.
-    - settings (dict): Dictionary containing user profile settings.
+    Args:
+        user_name (str): User name associated with the profile.
+        profile_name (str): Name of the profile.
+        settings (dict): JSON representation of profile settings.
 
     Returns:
-    None
+        None
     """
-    # Create a new database session
+    # Create a new session
     session = Session()
 
-    try:
-        # Query the database for the user with the given username
-        user = session.query(User).filter_by(username=user_name).first()
+    # Create a new profile instance with the provided parameters
+    profile = Profile(
+        user_name=user_name, 
+        profile_name=profile_name, 
+        settings=settings, 
+        timestamp_UTC=datetime.utcnow()
+        )
 
-        if user:
-            # Check if a profile with the same name already exists for the user
-            existing_profile = session.query(UserProfile).filter_by(user=user, profilename=profile_name).first()
-
-            if existing_profile:
-                # Update the existing profile with the new settings
-                for key, value in settings.items():
-                    setattr(existing_profile, key, value)
-        else:
-            # Create a new UserProfile object with the provided parameters and settings
-            new_profile = UserProfile(username=user_name, profilename=profile_name, **settings)
-            # Append the new profile to the user's profiles
-            # user.profiles.append(new_profile)
-        session.add(new_profile)
-        # Commit the changes to the database
-        session.commit()
-
-        # else:
-        #     print(f"User with username '{user_name}' not found.")
-
-    except IntegrityError as e:
-        # Handle IntegrityError, e.g., log the error or notify the user
-        print(f"Error: {e}")
-        session.rollback()
-
-    except Exception as e:
-        # Handle other exceptions as needed
-        print(f"Error: {e}")
-        session.rollback()
-
-    finally:
-        # Close the session (if not using a context manager)
-        session.close()
-
-# def save_settings(user_name, profile_name, settings):
-#     """
-#     Save user profile settings to the database.
-
-#     Parameters:
-#     - user_name (str): Unique username associated with the user.
-#     - profile_name (str): Unique name given to the user profile.
-#     - settings (dict): Dictionary containing user profile settings.
-
-#     Returns:
-#     None
-#     """
-    # # Create a new database session
-    # session = Session()
-
-#     # Create a new UserProfile object with the provided parameters and settings
-#     user_profile_obj = UserProfile(username=user_name, profilename=profile_name, **settings)
-    
-#     # Add the UserProfile object to the session
-#     session.add(user_profile_obj)
-
-#     # Commit the changes to the database
-#     session.commit()
-
-#     # Close the session
-#     session.close()
+    # Add the profile to the session and commit the changes to the database
+    session.add(profile)
+    session.commit()
 
 @st.cache_data
-def load_settings(user_name, profile_name):
+def load_profile(user_name):
+    """
+    Load user profiles from the database for a specified user.
+
+    Args:
+        user_name (str): The user name for which profiles should be loaded.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing profiles with columns 'user_name', 'profile_name', 'settings', and 'timestamp_UTC'.
+    """
+    # Create a new session
     session = Session()
-    user_profile_obj = session.query(UserProfile).filter(and_(UserProfile.username == user_name, UserProfile.profilename == profile_name)).first()
-    session.close()
-    return user_profile_obj
+
+    # Query the database to retrieve all profiles for the specified user
+    profiles = session.query(Profile).filter_by(user_name=user_name).all()
+
+    # Create a list of dictionaries containing 'user_name', 'profile_name', 'settings', and 'timestamp_UTC' for each profile
+    profile_data = [
+        {
+            'user_name': user_name,
+            'profile_name': profile.profile_name,
+            'settings': profile.settings,
+            'timestamp_UTC': profile.timestamp_UTC
+        }
+        for profile in profiles
+    ]
+    
+    # Convert the list of dictionaries to a DataFrame
+    df = pd.DataFrame(profile_data)
+
+    return df
 
 @st.cache_data
 def read_data(filepath):
@@ -482,40 +452,78 @@ def main():
         # Display the chart using Streamlit
         st.plotly_chart(acceptance_rate_fig, use_container_width=True, theme=None)
 
-        # Save settings button
-        # if save_preset:
+
+        # Create sidebar with save settings and load presets - Indent every line of code after `with st.sidebar`
+        # Display the Save Profile section in the sidebar
         with st.sidebar:
             st.header("Save Profile")
-            # Prompt for profile name
-            profile_name = st.text_input("Enter a new profile name:")
+
             # Prompt for user name
             user_name = st.selectbox(
-                    'Enter a user:',
-                    preset_df['MEDIA_BUYER'].unique().tolist()
-                )
+                'Select a user:',
+                preset_df['MEDIA_BUYER'].unique().tolist()
+            )
 
+            # Prompt for profile name
+            profile_name = st.text_input("Enter a new profile name:")
+
+            # Create a settings dictionary
             settings = {
                 "time_line": timelines,
+                "start_date": str(start_date),
+                "end_date": str(end_date),
                 "media_buyer": media_buyer,
-                "activer_days": active_days,
+                "active_days": active_days,
                 "campaign": campaign
             }
+
+            # Save button to save the current settings
             save_preset = st.button("Save Settings")
 
             if save_preset:
-                save_settings(user_name, profile_name, settings)
+                save_profile(user_name, profile_name, settings)
                 st.success(f"Settings for {user_name} saved!")
 
-            # Display presests
-            st.header("Presets")
-        # current_settings = load_settings(user_name, profile_name)
-        # if current_settings:
-        #     st.write(current_settings.__dict__)
-        # else:
-        #     st.warning("Select a user profile and save settings to view current settings.")
+            # Display Current Settings
+            st.header("Current Settings")
+            st.info(f"Time window: {timelines}") 
+            st.info(f"Media buyer: {media_buyer}")
+            st.info(f"Active within (days): {active_days}")
+            st.info(f"Campaign: {campaign}")
 
+            # Display Saved Settings
+            st.header("Saved Settings")
 
+            # Prompt for user to select
+            user = st.selectbox(
+                'User:',
+                preset_df['MEDIA_BUYER'].unique().tolist()
+            )
 
-    
+            # Load profiles for the selected user
+            settings_df = load_profile(user_name=user)
+
+            # Prompt for profile name
+            profile_df = settings_df[settings_df["user_name"]==user]
+            settings_profile = st.selectbox(
+                'Saved profiles:',
+                profile_df['profile_name'].tolist()
+            )
+
+            if settings_profile:
+                # Retrieve saved settings for the selected profile
+                saved_settings = settings_df[
+                    (settings_df["user_name"]==user) & (settings_df["profile_name"]==settings_profile)
+                ]['settings']
+                result_dict = saved_settings.values[0]
+
+            # Display saved settings
+            st.info(f"Time window: {result_dict['time_line']}") 
+            st.info(f"Start Date: {result_dict['start_date'].split(' ')[0].replace('-', '/')}") # Format for conformity with streamlit date input
+            st.info(f"End Date: {result_dict['end_date'].split(' ')[0].replace('-', '/')}") # Format for conformity with streamlit date input
+            st.info(f"Media buyer: {result_dict['media_buyer']}")
+            st.info(f"Active within (days): {result_dict['active_days']}")
+            st.info(f"Campaign: {result_dict['campaign']}")
+
 if __name__ == "__main__":
     main()
