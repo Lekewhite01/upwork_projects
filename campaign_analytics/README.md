@@ -19,7 +19,7 @@ To get started with Campaign Analytics v1, follow these steps:
         pip install -r requirements.txt
 3. **Enter the project Directory**:
 
-        cd upwork_projects/streamlit_app_rick/
+        cd upwork_projects/campaign_analytics/
 4. **Run the Application**:
 
         streamlit run app.py
