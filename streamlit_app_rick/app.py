@@ -115,7 +115,7 @@ def save_profile(user_name, profile_name, settings):
     # Add the profile to the session and commit the changes to the database
     session.add(profile)
     session.commit()
-    
+
 # @st.cache_data
 def load_profile(user_name):
     """
@@ -224,35 +224,35 @@ def main():
             # If the selected time window is "7 Days"
             if timelines == "7 Days":
                 # Create a text input for the start date
-                end_date = st.date_input("Start Date", most_recent_date)
+                end_date_main = st.date_input("Start Date", most_recent_date)
                 
                 # Calculate the starting date by rolling back 7 days from the most recent date
                 starting = roll_back_days(most_recent_date, 7)
                 
                 # Create a text input for the end date
-                start_date = st.date_input("End Date", starting)
+                start_date_main = st.date_input("End Date", starting)
                 
             # If the selected time window is "14 Days"
             elif timelines == "14 Days":
                 # Create a text input for the start date
-                end_date = st.date_input("Start Date", most_recent_date)
+                end_date_main = st.date_input("Start Date", most_recent_date)
                 
                 # Calculate the starting date by rolling back 14 days from the most recent date
-                starting = roll_back_days(most_recent_date, 14)
+                starting_main = roll_back_days(most_recent_date, 14)
                 
                 # Create a text input for the end date
-                start_date = st.date_input("End Date", starting)
+                start_date_main = st.date_input("End Date", starting)
 
             # If the selected time window is "Lifetime"
             else:
                 # Create a text input for the start date
-                end_date = st.date_input("Start Date", most_recent_date)
+                end_date_main = st.date_input("Start Date", most_recent_date)
                 
                 # Set the starting date as the minimum date in the DataFrame's 'ACTIVITY_DATE' column
                 starting = df['ACTIVITY_DATE'].min()
                 
                 # Create a text input for the end date
-                start_date = st.date_input("End Date", starting)
+                start_date_main = st.date_input("End Date", starting)
 
             # Filter the DataFrame to include only rows within the selected time window
             df = df.loc[(df['ACTIVITY_DATE'] >= starting) & (df['ACTIVITY_DATE'] <= most_recent_date)]
@@ -470,8 +470,8 @@ def main():
             # Create a settings dictionary
             settings = {
                 "time_line": timelines,
-                "start_date": str(start_date),
-                "end_date": str(end_date),
+                "start_date": str(end_date_main),
+                "end_date": str(start_date_main),
                 "media_buyer": media_buyer,
                 "active_days": active_days,
                 "campaign": campaign
@@ -487,8 +487,8 @@ def main():
             # Display Current Settings
             st.header("Current Settings")
             st.info(f"Time window: {timelines}") 
-            st.info(f"Start Date: {str(start_date).split(' ')[0].replace('-', '/')}") # Format for conformity with streamlit date input
-            st.info(f"End Date: {str(end_date).split(' ')[0].replace('-', '/')}") # Format for conformity with streamlit date input
+            st.info(f"Start Date: {str(end_date_main).split(' ')[0].replace('-', '/')}") # Format for conformity with streamlit date input
+            st.info(f"End Date: {str(start_date_main).split(' ')[0].replace('-', '/')}") # Format for conformity with streamlit date input
             st.info(f"Media buyer: {media_buyer}")
             st.info(f"Active within (days): {active_days}")
             st.info(f"Campaign: {campaign}")
@@ -505,8 +505,8 @@ def main():
                 # Load profiles for the selected user
                 settings_df = load_profile(user_name=user)
 
-                # Prompt for profile name
-                profile_df = settings_df[settings_df["user_name"]==user]
+            # Prompt for profile name
+            profile_df = settings_df[settings_df["user_name"]==user]
             settings_profile = st.selectbox(
                 'Saved profiles:',
                 profile_df['profile_name'].tolist()
