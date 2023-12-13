@@ -1,4 +1,5 @@
-pandas==2.1.3
-plotly==5.18.0
-SQLAlchemy==2.0.23
+pandas
+plotly-express
+SQLAlchemy
 streamlit==1.28.1
+Google-Images-Search

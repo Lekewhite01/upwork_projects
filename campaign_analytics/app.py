@@ -3,7 +3,9 @@ import pandas as pd
 import warnings
 import plotly.express as px
 from datetime import datetime
-from database import *
+from features.database import *
+from features.leaderboard import *
+from features.image_search import *
 # Ignore warnings
 warnings.filterwarnings('ignore')
 
@@ -42,7 +44,13 @@ st.markdown(custom_css, unsafe_allow_html=True)
 st.markdown('<div class="title-container"><img src="https://cdn.iconscout.com/icon/premium/png-512-thumb/marketing-analysis-3141395-2615916.png?f=webp&w=512" alt="Image" width="100"/><h1 class="title-text">Campaign Analytics</h1></div>', unsafe_allow_html=True)
 
 # Set application screens
-tab1, tab2, tab3 = st.tabs(["Campaign Stats", "Page 3", "Page 4"])
+tab1, tab2, tab3 = st.tabs(["Campaign Stats", "Leaderboard", "Image Search"])
+
+# Set up Google Images Search API credentials
+GCS_DEVELOPER_KEY = "YOUR_GOOGLE_CLOUD_API_KEY"
+GCS_CX = "85e8759d62c1e48d5"
+
+gis = GoogleImagesSearch(GCS_DEVELOPER_KEY, GCS_CX)
 
 @st.cache_data
 def read_data(filepath):
@@ -99,7 +107,7 @@ def main():
     Displays various metrics based on user selections using Plotly charts.
     """
     # Read csv data file
-    df = read_data("input_data/data_for_dash_full.csv")
+    df = read_data("input_data/data_year2023.csv")
 
     # Create a copy of the df
     preset_df = df.copy()
@@ -381,15 +389,14 @@ def main():
                 "active_days": active_days,
                 "campaign": campaign
             }
-
+            
             # Save button to save the current settings
             save_preset = st.button("Save Settings")
 
             if save_preset:
                 save_profile(user_name, profile_name, settings)
                 st.success(f"Settings for {user_name} saved!")
-
-
+            
             # Display Saved Settings
             st.header("Load Saved Settings")
 
@@ -401,14 +408,12 @@ def main():
             if user:
                 # Load profiles for the selected user
                 settings_df = load_profile(user_name=user)
-
             # Prompt for profile name
             profile_df = settings_df[settings_df["user_name"]==user]
             settings_profile = st.selectbox(
                 'Saved settings:',
                 profile_df['profile_name'].tolist()
             )
-
             if settings_profile:
                 # Retrieve saved settings for the selected profile
                 saved_settings = settings_df[
@@ -423,6 +428,115 @@ def main():
             st.info(f"Media buyer: {result_dict['media_buyer']}")
             st.info(f"Active within (days): {result_dict['active_days']}")
             st.info(f"Campaign: {result_dict['campaign']}")
+
+    with tab2:
+        # Split the layout into three columns
+        col4, col5, col6 = st.columns(3)
+        
+        # Create a radio button to select a time window
+        with col4:
+            leaderboard_timelines = st.radio(label="Select a Time Window", options=["weekly", "monthly", "yearly"], horizontal=True)
+        
+        # Create visualization options in the sidebar
+        with st.sidebar:
+            st.title("Visualize Leaderboard")
+            col7, col8 = st.columns(2)
+            
+            # Visualization checkboxes
+            with col7:
+                pie_chart = st.checkbox("Pie chart")
+                vertical_bar_chart = st.checkbox("Vertical Bar chart")
+            with col8:
+                line_chart = st.checkbox("Line chart")
+                horizontal_bar_chart = st.checkbox("Horizontal Bar chart")
+
+        # Read and preprocess data
+        leaderboard_df = process_activity_date_columns(pd.read_csv("input_data/data_year2023.csv"))
+        
+        # Get end date from user input
+        with col4:
+            end_date_leaderboard = st.date_input("End date", leaderboard_df["ACTIVITY_DATE"].max())
+
+        # Generate leaderboard based on selected time window
+        leaderboard = generate_leaderboard(leaderboard_df, str(end_date_leaderboard), leaderboard_timelines)
+
+        # Toggle to show/hide the leaderboard
+        show_leaderboard = st.toggle('Show Leaderboard')
+        
+        # Display the leaderboard if toggled on
+        if show_leaderboard:
+            st.dataframe(leaderboard,
+                        column_order=("RANKING", "NAME", "DOLLAR_AMOUNT", "PERCENTAGE"),
+                        height=200,
+                        use_container_width=False,
+                        hide_index=True
+                        )
+        # Plotly Charts based on user selections
+        if pie_chart:
+            # Create a Pie Chart using the 'Percentage' column
+            fig_pie_percentage = px.pie(leaderboard, names='NAME', values='DOLLAR_AMOUNT', title='Pie Chart (Percentage)')
+            fig_pie_percentage.update_layout(height=600, width=800)
+            st.plotly_chart(fig_pie_percentage, use_container_width=True, theme=None)
+
+        if vertical_bar_chart:
+            # Create a Vertical Bar Chart
+            fig_vertical_bar = px.bar(leaderboard, x='NAME', y='DOLLAR_AMOUNT', title='Vertical Bar Chart')
+            fig_vertical_bar.update_layout(xaxis_title="Name", yaxis_title="Amount [USD]",height=600, width=800)
+            st.plotly_chart(fig_vertical_bar, use_container_width=True, theme=None)
+        
+        if horizontal_bar_chart:
+            # Create a Horizontal Bar Chart
+            fig_horizontal_bar = px.bar(leaderboard.sort_values(by="DOLLAR_AMOUNT",ascending=True), 
+                                        x='DOLLAR_AMOUNT', y='NAME', orientation='h', title='Horizontal Bar Chart')
+            fig_horizontal_bar.update_layout(xaxis_title="Amount [USD]", yaxis_title="Name",height=600, width=800)
+            st.plotly_chart(fig_horizontal_bar, use_container_width=True, theme=None)
+
+        if line_chart:
+            # Create a Line Chart
+            fig_line = px.line(leaderboard, x='NAME', y='PERCENTAGE', title='Line Chart')
+            fig_line.update_layout(xaxis_title="Name", yaxis_title="Percentage",height=600, width=800)
+            st.plotly_chart(fig_line, use_container_width=True, theme=None)
+
+    with tab3:
+        # Set the title of the Streamlit app
+        st.title("Image Search and Download")
+
+        # Take user input for image search query
+        query = st.text_input("Enter your image search query:")
+
+        # Check if the "Search" button is clicked
+        if st.button("Search"):
+            # Prepare parameters for Google Images Search
+            search_params = {
+                'q': query,
+                'num': 5,  # Number of images to retrieve
+                'safe': 'off',  # Disable safe search
+            }
+
+            # Perform Google Images Search
+            gis.search(search_params=search_params)
+
+            # Display images in the search results
+            for image in gis.results():
+                # Get the URL and description of the image
+                image_url, image_description = display_image(image)
+
+                # Display the image with its caption
+                st.image(image_url, caption=image_description, use_column_width=True)
+
+                # Check if the "Download" button is clicked for the current image
+                if st.button("Download"):
+                    # Download the image
+                    img = download_image(image)
+
+                    # Prompt the user to choose where to save the image
+                    file_path = st.file_uploader("Choose where to save the image:", type="png")
+
+                    # Check if the user has chosen a file path
+                    if file_path:
+                        # Save the image to the specified file path
+                        img.save(file_path, "PNG")
+                        st.success(f"Image saved to {file_path}")
 
 if __name__ == "__main__":
     main()
